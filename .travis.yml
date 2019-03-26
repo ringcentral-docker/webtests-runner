@@ -9,7 +9,7 @@ env:
   - secure: Oy6oSZ3DdlBICH9BfzRiDroc7U+hqzf4kK0Elj/TZ3MB5hnn8dM2HPioa53S5MB64pvXIoG3kEa2dsKZgXR9EizlsBynVGBQWY0bg1jbvVh52qpXD8EaISUiLgn0SRVwRTWSR2mmS+p746apSzNfdwTVipPTd5ouLRtj+2PFMRrj0ufkODX27W0mwd5zGhd3+gWqU8nbTNGV3veuPlOr/t6/2CT3OFAFVYIjyCZA3wdYcv6A6K/eCFrUDYxGFevQqmzCZ/JD7kCwhR00lyib3gAN++uJ4EePS6Kgfz874f2kg8d/my4eIdXFKpDqDpRwTT2xktsdzHs4XiXXLw1j1ZpMvyREVDcP8IUdrSQzjzTn0UmfeUDY9D+uuw+P1t0DQEsfyFlpTZ7RluhT++CFWCmzlPKPGjk2IkYbtgDR23xCgL4sjCHRknbBBxt/qfwF9c2QEJd+nJgjJUNREnfhixDoUy/VzT1Tw0EfVo2HkC3AA3zIxPllsE6/p/vUcPfKDc76T9NC6UdPkh8K4+9Oaf9nhjA5mEwge3TjVHKftyM9MtnV/HmVM82ggdqZznJ3d8gA35FWWG1fSmbn6L0lTx9iJlpmXORHIBB2TNTq/MDpBANbA7yOSQnS6yLL+oJq8djv7lRhG+YgB226L+mJ26THirilCHkQoWpkxj1VCtE=
 before_script:
 - cd jdk8
-- version="$(awk -F '[:-]' '/FROM/ {print $3}' Dockerfile)"
+- version="$(awk -F '[:]' '/FROM/ {print $2}' Dockerfile)"
 script:
 - docker build -t "$IMAGE_NAME" .
 after_script:
