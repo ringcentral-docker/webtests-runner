@@ -24,8 +24,8 @@ jobs:
       run: |
         cd 14
         IMAGE_NAME=ringcentral/webtests-runner
-        NODE_VERSION="$(awk '/ENV NODE_VERSION/ {print $3}' Dockerfile)"
-        NODE_MAJOR_VERSION="$(awk -F '[ .]' '/ENV NODE_VERSION/ {print $3}' Dockerfile)"
+        NODE_VERSION="$(awk -F '[:.]' '/FROM/ {print $2}' Dockerfile)"
+        NODE_MAJOR_VERSION="$(awk -F '[:-]' '/FROM/ {print $2}' Dockerfile)"
         docker build --tag ${IMAGE_NAME} --file Dockerfile .
         docker tag "${IMAGE_NAME}" "${IMAGE_NAME}:latest"
         docker tag "${IMAGE_NAME}" "${IMAGE_NAME}:${NODE_MAJOR_VERSION}"
