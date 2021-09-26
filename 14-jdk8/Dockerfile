@@ -1,4 +1,4 @@
-FROM ringcentral/node:14.5.0-jdk8u202
+FROM ringcentral/node:14.17.6-jdk8u202
 LABEL maintainer="john.lin@ringcentral.com"
 
 RUN apk add --no-cache python3 alpine-sdk gradle
