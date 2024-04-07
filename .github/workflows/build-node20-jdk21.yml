@@ -1,4 +1,4 @@
-name: Build webtests runner base on Node 16 and JDK 17
+name: Build webtests runner base on Node 20 and JDK 21
 
 on:
   push:
@@ -6,7 +6,7 @@ on:
       - master
     paths:
       # '*' matches any character except '/'
-      - '16-jdk17/*'
+      - '20-jdk21/*'
       - '.github/workflows/*'
 jobs:
   build:
@@ -25,17 +25,19 @@ jobs:
 
     - name: Build & Push Docker Image
       run: |
-        cd 16-jdk17
+        cd 20-jdk21
         IMAGE_NAME=ringcentral/webtests-runner
         GH_DOCKER_PKG_IMAGE_NAME=docker.pkg.github.com/ringcentral-docker/webtests-runner/webtests-runner
 
+        NODE_VERSION="$(awk -F '[:.]' '/FROM/ {print $2}' Dockerfile)"
+        NODE_MAJOR_VERSION="$(awk -F '[:-]' '/FROM/ {print $2}' Dockerfile)"
         BASE_VERSION="$(awk -F '[:]' '/FROM/ {print $2}' Dockerfile)"
 
         docker build --tag ${IMAGE_NAME} --file Dockerfile .
         
         docker tag "${IMAGE_NAME}" "${IMAGE_NAME}:${BASE_VERSION}"
         
-        docker push "${IMAGE_NAME}:${BASE_VERSION}"  
+        docker push "${IMAGE_NAME}:${BASE_VERSION}"      
 
         docker tag "${IMAGE_NAME}" "${GH_DOCKER_PKG_IMAGE_NAME}:${BASE_VERSION}"
         
