@@ -2,8 +2,7 @@ FROM ghcr.io/ringcentral-docker/node/node:20.12.1-jdk21.0.2
 LABEL maintainer="john.lin@ringcentral.com"
 
 RUN apk add --no-cache python3 alpine-sdk gradle
-RUN apk del openssl
-RUN apk add libressl
+RUN apk add libressl && alias openssl='/usr/bin/libressl'
 
 #==============
 # Show version
