@@ -56,7 +56,7 @@ jobs:
     - name: Tag and Push Docker Images
       run: |
         IMAGE_NAME=ringcentral/webtests-runner
-        GH_DOCKER_PKG_IMAGE_NAME=docker.pkg.github.com/ringcentral-docker/webtests-runner/webtests-runner
+        GH_DOCKER_PKG_IMAGE_NAME=ghcr.io/ringcentral-docker/webtests-runner/webtests-runner
 
         docker tag "${IMAGE_NAME}" "${IMAGE_NAME}:${NODE_MAJOR_VERSION}"
         docker tag "${IMAGE_NAME}" "${IMAGE_NAME}:${NODE_VERSION}"
@@ -84,7 +84,7 @@ jobs:
     - name: Generate README Update
       run: |
         IMAGE_NAME=ringcentral/webtests-runner
-        GH_DOCKER_PKG_IMAGE_NAME=docker.pkg.github.com/ringcentral-docker/webtests-runner/webtests-runner
+        GH_DOCKER_PKG_IMAGE_NAME=ghcr.io/ringcentral-docker/webtests-runner/webtests-runner
 
         NEW_ENTRY="| JDK${{ matrix.jdk_version }} | ${BASE_VERSION} | \`${IMAGE_NAME}:${BASE_VERSION}\` | \`${GH_DOCKER_PKG_IMAGE_NAME}:${BASE_VERSION}\` |"
         echo "${NEW_ENTRY}" > readme_updates_${{ matrix.jdk_version }}.txt
