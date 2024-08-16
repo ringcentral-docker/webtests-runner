@@ -3,7 +3,6 @@ LABEL maintainer="john.lin@ringcentral.com"
 
 RUN apk add --no-cache libressl python3 gradle build-base
 RUN apk del openssl && \
-      rm -rf /var/cache/apk/* \
       ln -s /usr/bin/libressl /usr/bin/openssl
 
 #==============
