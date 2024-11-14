@@ -58,7 +58,7 @@ jobs:
         docker tag "${IMAGE_NAME}" "${IMAGE_NAME}:${BASE_VERSION}"
         docker push "${IMAGE_NAME}:${BASE_VERSION}"
         docker tag "${IMAGE_NAME}" "${GH_DOCKER_PKG_IMAGE_NAME}:${BASE_VERSION}"
-        docker push "${GH_DOCKER_PKG_IMAGE_NAME}${BASE_VERSION}"
+        docker push "${GH_DOCKER_PKG_IMAGE_NAME}:${BASE_VERSION}"
 
         if [ "${{ matrix.jdk_version }}" -eq 17 ]; then
           docker tag "${IMAGE_NAME}" "${IMAGE_NAME}:${NODE_VERSION}"
