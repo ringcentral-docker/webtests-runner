@@ -5,7 +5,8 @@ on:
     branches:
       - master
     paths:
-      - '*-jdk*/*'
+      - 'Dockerfile'
+      - 'version.env'
       - '.github/workflows/build-runner.yml'
 
 jobs:
@@ -13,8 +14,8 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        jdk_version: [11, 17, 21]
-        node_version: [20]
+        jdk_version: [8, 11, 17, 21]
+        node_version: [18, 20, 22]
       fail-fast: false
 
     steps:
@@ -32,53 +33,49 @@ jobs:
     - name: Set Environment Variables
       id: vars
       run: |
-        NODE_DIR=${{ matrix.node_version }}-jdk${{ matrix.jdk_version }}
-        if [[ -f ${NODE_DIR}/Dockerfile ]]; then
-          NODE_VERSION="$(awk -F '[:.]' '/FROM/ {print $3}' ${NODE_DIR}/Dockerfile)"
-          NODE_MAJOR_VERSION="$(awk -F '[:-]' '/FROM/ {print $3}' ${NODE_DIR}/Dockerfile)"
-          BASE_VERSION="$(awk -F '[:]' '/FROM/ {print $2}' ${NODE_DIR}/Dockerfile)"
-          echo $NODE_MAJOR_VERSION > ${NODE_DIR}/version.txt
-          echo $BASE_VERSION > ${NODE_DIR}/detail_version.txt
-        else
-          NODE_MAJOR_VERSION=$(cat ${NODE_DIR}/version.txt)
-          BASE_VERSION=$(cat ${NODE_DIR}/detail_version.txt)
-        fi
-        echo "NODE_DIR=${NODE_DIR}" >> $GITHUB_ENV
-        echo "NODE_VERSION=${NODE_VERSION}" >> $GITHUB_ENV
+        NODE_MAJOR_VERSION=${{ matrix.node_version }}
+        JDK_MAJOR_VERSION=${{ matrix.jdk_version }}
+        BASE_VERSION="$(awk -F '[=]' '/NODE_${{ matrix.node_version }}_JDK_${{ matrix.jdk_version }}_VERSION/ {print $2}' version.env)"
+        NODE_VERSION=${BASE_VERSION%%-*}
+        JDK_VERSION=${BASE_VERSION##*-}
         echo "NODE_MAJOR_VERSION=${NODE_MAJOR_VERSION}" >> $GITHUB_ENV
+        echo "JDK_MAJOR_VERSION=${JDK_MAJOR_VERSION}" >> $GITHUB_ENV
         echo "BASE_VERSION=${BASE_VERSION}" >> $GITHUB_ENV
+        echo "NODE_VERSION=${NODE_VERSION}" >> $GITHUB_ENV
+        echo "JDK_VERSION=${JDK_VERSION}" >> $GITHUB_ENV
 
     - name: Build Docker Image
       run: |
         IMAGE_NAME=ringcentral/webtests-runner
-        docker build --tag ${IMAGE_NAME} --file ${NODE_DIR}/Dockerfile .
+        sed -i "s/\$BASE_VERSION/$VERSION/g" Dockerfile
+        docker build --tag ${IMAGE_NAME} --file Dockerfile .
 
     - name: Tag and Push Docker Images
       run: |
         IMAGE_NAME=ringcentral/webtests-runner
         GH_DOCKER_PKG_IMAGE_NAME=ghcr.io/ringcentral-docker/webtests-runner/webtests-runner
-
-        docker tag "${IMAGE_NAME}" "${IMAGE_NAME}:${NODE_MAJOR_VERSION}"
-        docker tag "${IMAGE_NAME}" "${IMAGE_NAME}:${NODE_VERSION}"
+        
         docker tag "${IMAGE_NAME}" "${IMAGE_NAME}:${BASE_VERSION}"
-        
-        docker push "${IMAGE_NAME}:${NODE_MAJOR_VERSION}"
-        docker push "${IMAGE_NAME}:${NODE_VERSION}"
-        docker push "${IMAGE_NAME}:${BASE_VERSION}"      
-
-        docker tag "${IMAGE_NAME}" "${GH_DOCKER_PKG_IMAGE_NAME}:${NODE_MAJOR_VERSION}"
-        docker tag "${IMAGE_NAME}" "${GH_DOCKER_PKG_IMAGE_NAME}:${NODE_VERSION}"
+        docker push "${IMAGE_NAME}:${BASE_VERSION}"
         docker tag "${IMAGE_NAME}" "${GH_DOCKER_PKG_IMAGE_NAME}:${BASE_VERSION}"
-        
-        docker push "${GH_DOCKER_PKG_IMAGE_NAME}:${NODE_MAJOR_VERSION}"
-        docker push "${GH_DOCKER_PKG_IMAGE_NAME}:${NODE_VERSION}"
-        docker push "${GH_DOCKER_PKG_IMAGE_NAME}:${BASE_VERSION}"
+        docker push "${GH_DOCKER_PKG_IMAGE_NAME}${BASE_VERSION}"
 
-        if [ "${{ matrix.jdk_version }}" -eq 21 ]; then
-          docker tag "${IMAGE_NAME}" "${IMAGE_NAME}:latest"
-          docker push "${IMAGE_NAME}:latest"
-          docker tag "${IMAGE_NAME}" "${GH_DOCKER_PKG_IMAGE_NAME}:latest"
-          docker push "${GH_DOCKER_PKG_IMAGE_NAME}:latest"
+        if [ "${{ matrix.jdk_version }}" -eq 17 ]; then
+          docker tag "${IMAGE_NAME}" "${IMAGE_NAME}:${NODE_VERSION}"
+          docker tag "${IMAGE_NAME}" "${IMAGE_NAME}:${NODE_MAJOR_VERSION}"
+          docker push "${IMAGE_NAME}:${NODE_VERSION}"
+          docker push "${IMAGE_NAME}:${NODE_MAJOR_VERSION}"
+
+          docker tag "${IMAGE_NAME}" "${GH_DOCKER_PKG_IMAGE_NAME}:${NODE_VERSION}"
+          docker tag "${IMAGE_NAME}" "${GH_DOCKER_PKG_IMAGE_NAME}:${NODE_MAJOR_VERSION}"
+          docker push "${GH_DOCKER_PKG_IMAGE_NAME}:${NODE_VERSION}"
+          docker push "${GH_DOCKER_PKG_IMAGE_NAME}:${NODE_MAJOR_VERSION}"
+          if [ "${{ matrix.node_version }}" -eq 22 ]; then
+            docker tag "${IMAGE_NAME}" "${IMAGE_NAME}:latest"
+            docker push "${IMAGE_NAME}:latest"
+            docker tag "${IMAGE_NAME}" "${GH_DOCKER_PKG_IMAGE_NAME}:latest"
+            docker push "${GH_DOCKER_PKG_IMAGE_NAME}:latest"
+          fi
         fi
 
     - name: Generate README Update
@@ -86,43 +83,44 @@ jobs:
         IMAGE_NAME=ringcentral/webtests-runner
         GH_DOCKER_PKG_IMAGE_NAME=ghcr.io/ringcentral-docker/webtests-runner/webtests-runner
 
-        NEW_ENTRY="| JDK${{ matrix.jdk_version }} | ${BASE_VERSION} | \`${IMAGE_NAME}:${BASE_VERSION}\` | \`${GH_DOCKER_PKG_IMAGE_NAME}:${BASE_VERSION}\` |"
-        echo "${NEW_ENTRY}" > readme_updates_${{ matrix.jdk_version }}.txt
+        NEW_ENTRY="| JDK${{ matrix.jdk_version }} | ${{ matrix.node_version }} | \`${IMAGE_NAME}:${NODE_VERSION}\` \`${IMAGE_NAME}:${NODE_MAJOR_VERSION}\` \`${IMAGE_NAME}:${BASE_VERSION}\` | \`${GH_DOCKER_PKG_IMAGE_NAME}:${NODE_VERSION}\` \`${GH_DOCKER_PKG_IMAGE_NAME}:${NODE_MAJOR_VERSION}\` \`${GH_DOCKER_PKG_IMAGE_NAME}:${BASE_VERSION}\` |"
+        echo "${NEW_ENTRY}" > readme-updates-${{ matrix.node_version }}-${{ matrix.jdk_version }}.txt
 
     - name: Upload README Update
       uses: actions/upload-artifact@v4
       with:
-        name: readme-updates-${{ matrix.jdk_version }}
-        path: readme_updates_${{ matrix.jdk_version }}.txt
+        name: readme-updates-${{ matrix.node_version }}-${{ matrix.jdk_version }}
+        path: readme-updates-${{ matrix.node_version }}-${{ matrix.jdk_version }}.txt
 
   update-readme:
     needs: build
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
+
     - name: Download README Updates
       uses: actions/download-artifact@v4
       with:
-        name: readme-updates-11
+        name: readme-updates-18-17
         path: ./readme-updates
     - name: Download README Updates
       uses: actions/download-artifact@v4
       with:
-        name: readme-updates-17
+        name: readme-updates-20-17
         path: ./readme-updates
     - name: Download README Updates
       uses: actions/download-artifact@v4
       with:
-        name: readme-updates-21
+        name: readme-updates-22-17
         path: ./readme-updates
 
     - name: Initialize README
       run: |
-        echo "| JDK Version | Version | Docker Hub | GitHub Package |" > README.md
-        echo "|-------------|---------|------------|----------------|" >> README.md
+        echo "| JDK Version | Node Version | Docker Hub | GitHub Package |" > README.md
+        echo "|-------------|--------------|------------|----------------|" >> README.md
     - name: Update README
       run: |
-        for file in ./readme-updates/readme_updates_*.txt; do
+        for file in ./readme-updates/readme-updates-*.txt; do
           while IFS= read -r line; do
             JDK_VERSION=$(echo $line | cut -d' ' -f2)
             if grep -q "JDK${JDK_VERSION}" README.md; then
