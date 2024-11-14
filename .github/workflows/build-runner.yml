@@ -47,7 +47,7 @@ jobs:
     - name: Build Docker Image
       run: |
         IMAGE_NAME=ringcentral/webtests-runner
-        sed -i "s/\$BASE_VERSION/$VERSION/g" Dockerfile
+        sed -i "s/\$VERSION/$BASE_VERSION/g" Dockerfile
         docker build --tag ${IMAGE_NAME} --file Dockerfile .
 
     - name: Tag and Push Docker Images
