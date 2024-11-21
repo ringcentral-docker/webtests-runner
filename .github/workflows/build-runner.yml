@@ -83,7 +83,7 @@ jobs:
         IMAGE_NAME=ringcentral/webtests-runner
         GH_DOCKER_PKG_IMAGE_NAME=ghcr.io/ringcentral-docker/webtests-runner/webtests-runner
 
-        NEW_ENTRY="| JDK${{ matrix.jdk_version }} | ${{ matrix.node_version }} | \`${IMAGE_NAME}:${NODE_VERSION}\` \`${IMAGE_NAME}:${NODE_MAJOR_VERSION}\` \`${IMAGE_NAME}:${BASE_VERSION}\` | \`${GH_DOCKER_PKG_IMAGE_NAME}:${NODE_VERSION}\` \`${GH_DOCKER_PKG_IMAGE_NAME}:${NODE_MAJOR_VERSION}\` \`${GH_DOCKER_PKG_IMAGE_NAME}:${BASE_VERSION}\` |"
+        NEW_ENTRY="| JDK${{ matrix.jdk_version }} | ${{ matrix.node_version }} | \`${IMAGE_NAME}:${BASE_VERSION}\` | \`${GH_DOCKER_PKG_IMAGE_NAME}:${BASE_VERSION}\` |"
         echo "${NEW_ENTRY}" > readme-updates-${{ matrix.node_version }}-${{ matrix.jdk_version }}.txt
 
     - name: Upload README Update
